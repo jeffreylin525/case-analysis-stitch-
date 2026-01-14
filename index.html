@@ -125,28 +125,28 @@
     </main>
 
     <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-lg px-6 z-50">
-    <nav class="glass-effect border border-slate-200/50 pb-6 pt-3 px-10 flex justify-between items-center rounded-[32px] shadow-2xl">
-        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-primary transition-all">
-            <span class="material-symbols-outlined text-2xl">explore</span>
-            <span class="text-[10px] font-bold">分析</span>
-        </button>
-        <button onclick="alert('正在開發中：將串接 Google Sheets 歷史清單')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-all">
-            <span class="material-symbols-outlined text-2xl">history</span>
-            <span class="text-[10px] font-medium">紀錄</span>
-        </button>
-        <button onclick="alert('設定功能：可調整 AI 語氣與個人化簽名')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-all">
-            <span class="material-symbols-outlined text-2xl">settings</span>
-            <span class="text-[10px] font-medium">設定</span>
-        </button>
-    </nav>
-</div>
+        <nav class="glass-effect border border-slate-200/50 pb-6 pt-3 px-10 flex justify-between items-center rounded-[32px] shadow-2xl">
+            <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-primary transition-all">
+                <span class="material-symbols-outlined text-2xl">explore</span>
+                <span class="text-[10px] font-bold">分析</span>
+            </button>
+            <button onclick="alert('正在開發中：將串接 Google Sheets 歷史清單')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-all">
+                <span class="material-symbols-outlined text-2xl">history</span>
+                <span class="text-[10px] font-medium">紀錄</span>
+            </button>
+            <button onclick="alert('設定功能：可調整 AI 語氣與個人化簽名')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-all">
+                <span class="material-symbols-outlined text-2xl">settings</span>
+                <span class="text-[10px] font-medium">設定</span>
+            </button>
+        </nav>
+    </div>
 
     <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
 
     <script>
-        // ... (保持原本的 JS 邏輯不變) ...
         const WEBHOOK_ANALYSIS = 'https://l52511.zeabur.app/webhook/case-analysis';
         const WEBHOOK_SAVE = 'https://l52511.zeabur.app/webhook/save-to-docs';
+        const WEBHOOK_HISTORY = 'https://l52511.zeabur.app/webhook/history-ozwak';
         let currentFile = null;
 
         function handleFileSelect(input) {
@@ -190,26 +190,40 @@
                     headers: { 'Content-Type': 'application/json', 'X-N8N-0525-KEY': 'wirPid-qIkmyg-2powwa' },
                     body: JSON.stringify({ content: finalContent, filename: filename })
                 });
-                if (response.ok) alert("✅ 已存入 Google Drive");
-                else alert("❌ 存檔失敗");
-            } catch (error) { alert("連線錯誤"); } finally {
+                
+                if (response.ok) {
+                    alert("✅ 已存入 Google Drive");
+                    // *** 修正點 1: 儲存成功後，呼叫同步歷史紀錄的函數 ***
+                    await syncToHistory(filename, finalContent);
+                } else {
+                    alert("❌ 存檔失敗");
+                }
+            } catch (error) { 
+                console.error(error);
+                alert("連線錯誤"); 
+            } finally {
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span><span>確認儲存並歸檔</span>';
             }
         }
-// 在 saveToDrive 成功後加入這段，讓它自動去寫入 Sheet
-async function syncToHistory(caseData) {
-    const WEBHOOK_HISTORY = 'https://l52511.zeabur.app/webhook/history-ozwak';
-    await fetch(WEBHOOK_HISTORY, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            caseName: caseData.filename,
-            summary: caseData.content.substring(0, 100), // 擷取前100字
-            timestamp: new Date().toISOString()
-        })
-    });
-}
+
+        // *** 修正點 2: 優化同步函數的定義與參數傳遞 ***
+        async function syncToHistory(name, content) {
+            try {
+                await fetch(WEBHOOK_HISTORY, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        caseName: name,
+                        summary: content.substring(0, 100), // 擷取前 100 字
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                console.log("History synced to Sheets.");
+            } catch (err) {
+                console.error("History sync failed:", err);
+            }
+        }
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
