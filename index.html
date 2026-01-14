@@ -192,10 +192,14 @@
             listContainer.innerHTML = '<div class="text-center py-10 text-slate-400">讀取紀錄中...</div>';
 
             try {
-                const response = await fetch(WEBHOOK_GET_HISTORY, { method: 'POST' });
-                const data = await response.json(); // 預期 n8n 回傳一個陣列
-                
-                listContainer.innerHTML = '';
+                const response = await fetch(WEBHOOK_GET_HISTORY, { 
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-N8N-0525-KEY': 'wirPid-qIkmyg-2powwa' // Added API Key
+                    },
+                    body: JSON.stringify({}) // Added empty JSON body
+                });
                 
                 // 限制顯示 5 筆
                 const records = Array.isArray(data) ? data.slice(-5).reverse() : [];
