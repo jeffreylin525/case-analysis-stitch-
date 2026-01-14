@@ -18,78 +18,93 @@
         }
         .glass-effect { backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.9); }
         .hidden { display: none !important; }
-        .floating-label-input:placeholder-shown + label { transform: translateY(1.2rem) scale(1); color: #94a3b8; }
-        .floating-label-input:focus + label, .floating-label-input:not(:placeholder-shown) + label { transform: translateY(-0.1rem) scale(0.85); color: #1e3a8a; font-weight: 600; }
+        /* 卡片進入動畫 */
+        .fade-slide-in { animation: fadeInUp 0.5s ease forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 
-<body class="bg-background-light text-slate-800 min-h-screen pb-32">
+<body class="bg-[#f8fafc] text-slate-800 min-h-screen pb-32">
+
     <header class="pt-12 pb-6 px-6 text-center">
         <div class="flex justify-center mb-2">
-            <span class="material-symbols-outlined text-4xl text-primary">balance</span>
+            <span class="material-symbols-outlined text-4xl text-[#1e3a8a]">balance</span>
         </div>
-        <h1 class="text-2xl font-bold tracking-tight text-slate-900">案情分析室</h1>
-        <p class="text-sm text-slate-500 mt-1 font-light tracking-wide">AI 輔助法律診斷與歸檔系統</p>
+        <h1 class="text-2xl font-bold text-slate-900">案情分析室</h1>
+        <p class="text-sm text-slate-500 mt-1 font-light">AI 輔助法律診斷與歸檔系統</p>
     </header>
 
     <main class="px-6 space-y-6 max-w-lg mx-auto">
-        <div id="input-section" class="space-y-6 flex flex-col items-center">
+        
+        <div id="section-analyze" class="tab-content space-y-6 flex flex-col items-center">
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm w-full">
                 <div class="mb-8">
                     <div class="flex items-center gap-2 mb-4">
-                        <span class="text-xs font-bold bg-primary text-white w-5 h-5 flex items-center justify-center rounded-full">1</span>
+                        <span class="text-xs font-bold bg-[#1e3a8a] text-white w-5 h-5 flex items-center justify-center rounded-full">1</span>
                         <h2 class="text-base font-semibold text-slate-700">當事人陳述 / 案情摘要</h2>
                     </div>
-                    <div class="relative">
-                        <textarea id="case-detail" class="floating-label-input w-full min-h-[160px] p-4 pt-6 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none text-sm" placeholder=" "></textarea>
-                        <label class="absolute left-4 top-1 text-xs transition-all pointer-events-none origin-left">請輸入事實經過（如：發生時間、地點）</label>
-                    </div>
+                    <textarea id="case-detail" class="w-full min-h-[160px] p-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-[#1e3a8a] outline-none text-sm" placeholder="請輸入事實經過..."></textarea>
                 </div>
-                <div id="upload-zone" onclick="document.getElementById('case-file').click()" class="border-2 border-dashed border-slate-200 rounded-2xl p-8 hover:bg-slate-50 cursor-pointer text-center">
+
+                <div id="upload-zone" onclick="document.getElementById('case-file').click()" class="border-2 border-dashed border-slate-200 rounded-2xl p-8 hover:bg-slate-50 cursor-pointer text-center mb-8">
                     <span class="material-symbols-outlined text-slate-400">upload_file</span>
                     <p id="upload-text" class="text-sm font-medium text-slate-600">點擊上傳佐證資料</p>
                     <input type="file" id="case-file" class="hidden" onchange="handleFileSelect(this)">
                 </div>
-                <div class="flex justify-center mt-6">
-                    <button onclick="startAnalysis()" class="pulse-glow px-12 bg-primary text-white font-semibold py-4 rounded-full flex items-center gap-3">
-                        <span class="material-symbols-outlined text-xl">psychology</span>
+
+                <div class="flex justify-center">
+                    <button onclick="startAnalysis()" class="pulse-glow px-12 bg-[#1e3a8a] text-white font-semibold py-4 rounded-full flex items-center gap-3">
+                        <span class="material-symbols-outlined">psychology</span>
                         <span class="text-lg">開始智慧分析</span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div id="loading-spinner" class="hidden text-center py-10">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-primary mb-4"></div>
+        <div id="section-loading" class="tab-content hidden text-center py-20">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-[#1e3a8a] mb-4"></div>
             <p class="text-slate-500 font-medium">AI 助理正在研讀案情...</p>
         </div>
 
-        <div id="result-section" class="hidden flex flex-col items-center">
+        <div id="section-result" class="tab-content hidden flex flex-col items-center fade-slide-in">
             <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm w-full">
                 <textarea id="result-editor" class="w-full min-h-[300px] p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm leading-relaxed mb-6"></textarea>
-                <input type="text" id="doc-filename" class="w-full p-3 border border-slate-200 rounded-xl text-sm mb-4" placeholder="檔案名稱">
+                <input type="text" id="doc-filename" class="w-full p-3 border border-slate-200 rounded-xl text-sm mb-6" placeholder="檔案名稱">
+                
                 <div class="flex flex-col items-center gap-4">
-                    <button id="btn-save-cloud" onclick="saveToDrive()" class="px-12 bg-emerald-600 text-white font-bold py-4 rounded-full flex items-center gap-2">
+                    <button id="btn-save-cloud" onclick="saveToDrive()" class="px-12 bg-emerald-600 text-white font-bold py-4 rounded-full flex items-center gap-2 shadow-lg">
                         <span class="material-symbols-outlined">cloud_upload</span>
                         <span class="text-lg">確認儲存並歸檔</span>
                     </button>
-                    <button onclick="location.reload()" class="text-slate-400 text-sm">清除重來</button>
+                    <button onclick="switchTab('analyze')" class="text-slate-400 text-sm">回上一步</button>
                 </div>
             </div>
         </div>
+
+        <div id="section-history" class="tab-content hidden space-y-4 fade-slide-in">
+            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2 mb-4 px-2">
+                <span class="material-symbols-outlined text-primary">history</span> 最近分析紀錄
+            </h2>
+            <div id="history-list" class="space-y-4">
+                </div>
+        </div>
+
     </main>
 
     <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-lg px-6 z-50">
         <nav class="glass-effect border border-slate-200/50 pb-6 pt-3 px-10 flex justify-between items-center rounded-[32px] shadow-2xl">
-            <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-primary">
+            <button onclick="switchTab('analyze')" id="nav-analyze" class="nav-btn flex flex-col items-center gap-1 text-[#1e3a8a]">
                 <span class="material-symbols-outlined text-2xl">explore</span>
                 <span class="text-[10px] font-bold">分析</span>
             </button>
-            <button onclick="window.open('您的GoogleSheets網址', '_blank')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary">
+            <button onclick="loadHistory()" id="nav-history" class="nav-btn flex flex-col items-center gap-1 text-slate-400 hover:text-primary">
                 <span class="material-symbols-outlined text-2xl">history</span>
                 <span class="text-[10px] font-medium">紀錄</span>
             </button>
-            <button onclick="alert('設定功能：可調整 AI 語氣與個人化簽名')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary">
+            <button onclick="alert('設定功能：即將上線')" id="nav-settings" class="nav-btn flex flex-col items-center gap-1 text-slate-400">
                 <span class="material-symbols-outlined text-2xl">settings</span>
                 <span class="text-[10px] font-medium">設定</span>
             </button>
@@ -99,8 +114,19 @@
     <script>
         const WEBHOOK_ANALYSIS = 'https://l52511.zeabur.app/webhook/case-analysis';
         const WEBHOOK_SAVE = 'https://l52511.zeabur.app/webhook/save-to-docs';
-        const WEBHOOK_HISTORY = 'https://l52511.zeabur.app/webhook/history-ozwak';
+        const WEBHOOK_GET_HISTORY = 'https://l52511.zeabur.app/webhook/history-ozwak'; // 您的第三條工作流 (Read)
+        
         let currentFile = null;
+
+        // 頁面切換邏輯
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`section-${tabId}`).classList.remove('hidden');
+            
+            // 更新底部導航顏色
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.replace('text-[#1e3a8a]', 'text-slate-400'));
+            document.getElementById(`nav-${tabId === 'loading' || tabId === 'result' ? 'analyze' : tabId}`).classList.replace('text-slate-400', 'text-[#1e3a8a]');
+        }
 
         function handleFileSelect(input) {
             if (input.files && input.files[0]) {
@@ -111,44 +137,46 @@
 
         async function startAnalysis() {
             const content = document.getElementById('case-detail').value;
-            if (!content && !currentFile) return alert("請輸入內容或上傳檔案");
-            document.getElementById('input-section').classList.add('hidden');
-            document.getElementById('loading-spinner').classList.remove('hidden');
+            if (!content && !currentFile) return alert("請輸入案情描述");
+            
+            switchTab('loading');
+            
             try {
                 const formData = new FormData();
                 formData.append('description', content);
                 if (currentFile) formData.append('file', currentFile);
+                
                 const response = await fetch(WEBHOOK_ANALYSIS, { method: 'POST', body: formData });
                 const data = await response.json();
+                
                 document.getElementById('result-editor').value = data.analysis || data.output || "分析完成。";
                 document.getElementById('doc-filename').value = `案情分析_${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
-                document.getElementById('loading-spinner').classList.add('hidden');
-                document.getElementById('result-section').classList.remove('hidden');
-            } catch (error) { alert("連線失敗"); location.reload(); }
+                
+                switchTab('result');
+            } catch (error) { 
+                alert("分析失敗"); 
+                switchTab('analyze'); 
+            }
         }
 
         async function saveToDrive() {
             const finalContent = document.getElementById('result-editor').value;
             const filename = document.getElementById('doc-filename').value;
             const btn = document.getElementById('btn-save-cloud');
+            
             btn.disabled = true;
             btn.innerHTML = "處理中...";
 
             try {
+                // 觸發第二條工作流：Docs + Append Sheet
                 const response = await fetch(WEBHOOK_SAVE, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-N8N-0525-KEY': 'wirPid-qIkmyg-2powwa' },
                     body: JSON.stringify({ content: finalContent, filename: filename })
                 });
                 
-                if (response.ok) {
-                    // *** 關鍵修正：先同步紀錄，再彈出成功視窗 ***
-                    console.log("開始同步紀錄...");
-                    await syncToHistory(filename, finalContent);
-                    alert("✅ 已存入 Google Drive 並同步紀錄！");
-                } else {
-                    alert("❌ 存檔失敗");
-                }
+                if (response.ok) alert("✅ 已成功儲存並存入歷史紀錄！");
+                else alert("❌ 儲存失敗");
             } catch (error) { 
                 alert("連線錯誤"); 
             } finally {
@@ -157,20 +185,43 @@
             }
         }
 
-        async function syncToHistory(name, content) {
+        // 讀取歷史紀錄 (第三條工作流)
+        async function loadHistory() {
+            switchTab('history');
+            const listContainer = document.getElementById('history-list');
+            listContainer.innerHTML = '<div class="text-center py-10 text-slate-400">讀取紀錄中...</div>';
+
             try {
-                // 這裡加入控制台紀錄，方便在瀏覽器檢查是否觸發
-                const res = await fetch(WEBHOOK_HISTORY, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        caseName: name,
-                        summary: content.substring(0, 100),
-                        timestamp: new Date().toLocaleString()
-                    })
+                const response = await fetch(WEBHOOK_GET_HISTORY, { method: 'POST' });
+                const data = await response.json(); // 預期 n8n 回傳一個陣列
+                
+                listContainer.innerHTML = '';
+                
+                // 限制顯示 5 筆
+                const records = Array.isArray(data) ? data.slice(-5).reverse() : [];
+                
+                if (records.length === 0) {
+                    listContainer.innerHTML = '<div class="text-center py-10 text-slate-400">目前尚無紀錄</div>';
+                    return;
+                }
+
+                records.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-primary transition-all";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-slate-800 text-sm">${item.caseName || '未命名案件'}</h3>
+                            <span class="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded-full">${item.timestamp || ''}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                            ${item.summary || '無摘要內容'}
+                        </p>
+                    `;
+                    listContainer.appendChild(card);
                 });
-                if(res.ok) console.log("歷史紀錄已成功傳送至 n8n");
-            } catch (err) { console.error("歷史紀錄同步失敗:", err); }
+            } catch (error) {
+                listContainer.innerHTML = '<div class="text-center py-10 text-red-400">讀取失敗，請確認 Webhook 狀態</div>';
+            }
         }
     </script>
 </body>
