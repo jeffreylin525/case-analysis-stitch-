@@ -187,75 +187,42 @@
 
         // 讀取歷史紀錄 (第三條工作流)
         async function loadHistory() {
-  const listEl = document.getElementById('history-list');
-  const loadingEl = document.getElementById('history-loading');
+            switchTab('history');
+            const listContainer = document.getElementById('history-list');
+            listContainer.innerHTML = '<div class="text-center py-10 text-slate-400">讀取紀錄中...</div>';
 
-  listEl.innerHTML = '';
-  loadingEl.style.display = 'block';
+            try {
+                const response = await fetch(WEBHOOK_GET_HISTORY, { method: 'POST' });
+                const data = await response.json(); // 預期 n8n 回傳一個陣列
+                
+                listContainer.innerHTML = '';
+                
+                // 限制顯示 5 筆
+                const records = Array.isArray(data) ? data.slice(-5).reverse() : [];
+                
+                if (records.length === 0) {
+                    listContainer.innerHTML = '<div class="text-center py-10 text-slate-400">目前尚無紀錄</div>';
+                    return;
+                }
 
-  try {
-    const res = await fetch('https://l52511.zeabur.app/webhook/history-ozwak', {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    // 兼容 n8n 常見兩種回傳：
-    // 1) 直接是 array: [ {json...}, {json...} ]
-    // 2) 是 object 包 array: { data: [...] } 或 { items: [...] }
-    const rows =
-      Array.isArray(data) ? data :
-      (Array.isArray(data.items) ? data.items :
-      (Array.isArray(data.data) ? data.data : []));
-
-    if (!rows.length) {
-      listEl.innerHTML = '<p>目前沒有可顯示的紀錄。</p>';
-      return;
-    }
-
-    // 這裡假設每一列至少有「time」「analysis」或類似欄位
-    // 欄位名稱要跟你寫入 Sheets 的欄位一致：例如 timestamp / createdAt / output / analysis 等
-    const html = rows.slice(0, 3).map((r, idx) => {
-      // n8n items 有時候資料在 r.json 裡，有時候 r 本身就是 row
-      const row = r.json ? r.json : r;
-
-      const t = row.time || row.timestamp || row.createdAt || '';
-      const a = row.analysis || row.output || row.result || '';
-
-      return `
-        <div style="padding:12px;border:1px solid #eee;border-radius:10px;margin:10px 0;">
-          <div style="font-size:0.95rem;color:#666;margin-bottom:6px;">
-            第 ${idx + 1} 筆 ${t ? `｜${escapeHtml(String(t))}` : ''}
-          </div>
-          <div>${marked.parse(a ? String(a) : '(無內容)')}</div>
-        </div>
-      `;
-    }).join('');
-
-    listEl.innerHTML = html;
-
-  } catch (err) {
-    listEl.innerHTML = `<p style="color:#b00020;">讀取失敗：${escapeHtml(String(err))}</p>
-    <p style="color:#666;">請檢查：n8n history webhook 是否開啟、CORS Allowed Origins、以及回傳格式。</p>`;
-  } finally {
-    loadingEl.style.display = 'none';
-  }
-}
-
-function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (m) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  }[m]));
-}
+                records.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-primary transition-all";
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-slate-800 text-sm">${item.caseName || '未命名案件'}</h3>
+                            <span class="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded-full">${item.timestamp || ''}</span>
+                        </div>
+                        <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                            ${item.summary || '無摘要內容'}
+                        </p>
+                    `;
+                    listContainer.appendChild(card);
+                });
+            } catch (error) {
+                listContainer.innerHTML = '<div class="text-center py-10 text-red-400">讀取失敗，請確認 Webhook 狀態</div>';
+            }
+        }
     </script>
 </body>
 </html>
