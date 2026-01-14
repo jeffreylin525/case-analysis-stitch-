@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>律師 AI 案情分析室</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+    <link rel="apple-touch-icon" href="icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#1e3a8a",
+                        "background-light": "#f8fafc",
+                    },
+                    fontFamily: { display: ["Inter", "Noto Sans TC", "sans-serif"] },
+                },
+            },
+        };
+    </script>
+
+    <style>
+        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .pulse-glow { animation: pulse-indigo 2.5s infinite; }
+        @keyframes pulse-indigo {
+            0% { box-shadow: 0 0 0 0 rgba(30, 58, 138, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(30, 58, 138, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(30, 58, 138, 0); }
+        }
+        .glass-effect { backdrop-filter: blur(12px); background: rgba(255, 255, 255, 0.9); }
+        .hidden { display: none !important; }
+        .floating-label-input:placeholder-shown + label { transform: translateY(1.2rem) scale(1); color: #94a3b8; }
+        .floating-label-input:focus + label, .floating-label-input:not(:placeholder-shown) + label { transform: translateY(-0.1rem) scale(0.85); color: #1e3a8a; font-weight: 600; }
+    </style>
+</head>
+
+<body class="bg-background-light text-slate-800 min-h-screen pb-32">
+
+    <header class="pt-12 pb-6 px-6 text-center">
+        <div class="flex justify-center mb-2">
+            <span class="material-symbols-outlined text-4xl text-primary">balance</span>
+        </div>
+        <h1 class="text-2xl font-bold tracking-tight text-slate-900">案情分析室</h1>
+        <p class="text-sm text-slate-500 mt-1 font-light tracking-wide">AI 輔助法律診斷與歸檔系統</p>
+    </header>
+
+    <main class="px-6 space-y-6 max-w-lg mx-auto">
+        
+        <div id="input-section" class="space-y-6 flex flex-col items-center">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm w-full">
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xs font-bold bg-primary text-white w-5 h-5 flex items-center justify-center rounded-full">1</span>
+                        <h2 class="text-base font-semibold text-slate-700">當事人陳述 / 案情摘要</h2>
+                    </div>
+                    <div class="relative">
+                        <textarea id="case-detail" class="floating-label-input w-full min-h-[160px] p-4 pt-6 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none resize-none text-sm" placeholder=" "></textarea>
+                        <label class="absolute left-4 top-1 text-xs transition-all pointer-events-none origin-left">請輸入事實經過（如：發生時間、地點）</label>
+                    </div>
+                </div>
+
+                <div class="mb-8">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-xs font-bold bg-primary text-white w-5 h-5 flex items-center justify-center rounded-full">2</span>
+                        <h2 class="text-base font-semibold text-slate-700">上傳佐證資料</h2>
+                    </div>
+                    <div id="upload-zone" onclick="document.getElementById('case-file').click()" class="group relative flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-8 hover:border-primary/50 hover:bg-slate-50 transition-all cursor-pointer text-center">
+                        <div id="upload-icon-container" class="bg-slate-100 p-3 rounded-full mb-3 group-hover:scale-110 transition-transform">
+                            <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">upload_file</span>
+                        </div>
+                        <p id="upload-text" class="text-sm font-medium text-slate-600">點擊或拖曳上傳圖片或文件</p>
+                        <input type="file" id="case-file" class="hidden" onchange="handleFileSelect(this)">
+                    </div>
+                </div>
+
+                <div class="flex justify-center mt-4">
+                    <button onclick="startAnalysis()" class="pulse-glow w-fit px-12 bg-primary text-white font-semibold py-4 rounded-full flex items-center justify-center gap-3 active:scale-[0.98] transition-all shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-xl">psychology</span>
+                        <span class="text-lg">開始智慧分析</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-spinner" class="hidden text-center py-10">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-primary mb-4"></div>
+            <p class="text-slate-500 font-medium">AI 助理正在研讀案情...</p>
+        </div>
+
+        <div id="result-section" class="hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col items-center">
+                <label class="w-full flex items-center gap-2 text-primary font-bold mb-4">
+                    <span class="material-symbols-outlined">description</span>
+                    分析報告 (可點擊修改)
+                </label>
+                <textarea id="result-editor" class="w-full min-h-[300px] p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm leading-relaxed focus:outline-none mb-6"></textarea>
+                
+                <div class="w-full space-y-4 flex flex-col items-center">
+                    <label class="w-full text-xs font-bold text-slate-400 uppercase tracking-widest text-left">歸檔設定</label>
+                    <input type="text" id="doc-filename" class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm mb-4" placeholder="檔案名稱">
+                    
+                    <button id="btn-save-cloud" onclick="saveToDrive()" class="w-fit px-12 bg-emerald-600 text-white font-bold py-4 rounded-full flex items-center justify-center gap-2 shadow-lg shadow-emerald-100 transition-all active:scale-[0.98]">
+                        <span class="material-symbols-outlined">cloud_upload</span>
+                        <span class="text-lg">確認儲存並歸檔</span>
+                    </button>
+                    
+                    <button onclick="location.reload()" class="w-fit px-8 text-slate-400 font-medium py-3 flex items-center justify-center gap-2 hover:text-slate-600 transition-all">
+                        <span class="material-symbols-outlined text-sm">restart_alt</span>
+                        <span class="text-sm">清除重來</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-lg px-6 z-50">
+    <nav class="glass-effect border border-slate-200/50 pb-6 pt-3 px-10 flex justify-between items-center rounded-[32px] shadow-2xl">
+        <button onclick="location.reload()" class="flex flex-col items-center gap-1 text-primary transition-all">
+            <span class="material-symbols-outlined text-2xl">explore</span>
+            <span class="text-[10px] font-bold">分析</span>
+        </button>
+        <button onclick="alert('正在開發中：將串接 Google Sheets 歷史清單')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-all">
+            <span class="material-symbols-outlined text-2xl">history</span>
+            <span class="text-[10px] font-medium">紀錄</span>
+        </button>
+        <button onclick="alert('設定功能：可調整 AI 語氣與個人化簽名')" class="flex flex-col items-center gap-1 text-slate-400 hover:text-primary transition-all">
+            <span class="material-symbols-outlined text-2xl">settings</span>
+            <span class="text-[10px] font-medium">設定</span>
+        </button>
+    </nav>
+</div>
+
+    <div class="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+
+    <script>
+        // ... (保持原本的 JS 邏輯不變) ...
+        const WEBHOOK_ANALYSIS = 'https://l52511.zeabur.app/webhook/case-analysis';
+        const WEBHOOK_SAVE = 'https://l52511.zeabur.app/webhook/save-to-docs';
+        let currentFile = null;
+
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                currentFile = input.files[0];
+                const uploadZone = document.getElementById('upload-zone');
+                const uploadText = document.getElementById('upload-text');
+                uploadZone.classList.add('border-emerald-500', 'bg-emerald-50');
+                uploadText.innerHTML = `<span class="text-emerald-600 font-bold">已選取：${currentFile.name}</span>`;
+            }
+        }
+
+        async function startAnalysis() {
+            const content = document.getElementById('case-detail').value;
+            if (!content && !currentFile) return alert("請輸入內容或上傳檔案");
+            document.getElementById('input-section').classList.add('hidden');
+            document.getElementById('loading-spinner').classList.remove('hidden');
+            try {
+                const formData = new FormData();
+                formData.append('description', content);
+                if (currentFile) formData.append('file', currentFile);
+                const response = await fetch(WEBHOOK_ANALYSIS, { method: 'POST', body: formData });
+                const data = await response.json();
+                const aiResponse = data.analysis || data.output || "分析完成。";
+                document.getElementById('result-editor').value = aiResponse;
+                document.getElementById('doc-filename').value = `案情分析_${new Date().toISOString().slice(0,10).replace(/-/g,'')}`;
+                document.getElementById('loading-spinner').classList.add('hidden');
+                document.getElementById('result-section').classList.remove('hidden');
+            } catch (error) { alert("連線失敗"); location.reload(); }
+        }
+
+        async function saveToDrive() {
+            const finalContent = document.getElementById('result-editor').value;
+            const filename = document.getElementById('doc-filename').value;
+            const btn = document.getElementById('btn-save-cloud');
+            btn.disabled = true;
+            btn.innerHTML = "存檔中...";
+            try {
+                const response = await fetch(WEBHOOK_SAVE, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-N8N-0525-KEY': 'wirPid-qIkmyg-2powwa' },
+                    body: JSON.stringify({ content: finalContent, filename: filename })
+                });
+                if (response.ok) alert("✅ 已存入 Google Drive");
+                else alert("❌ 存檔失敗");
+            } catch (error) { alert("連線錯誤"); } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">cloud_upload</span><span>確認儲存並歸檔</span>';
+            }
+        }
+// 在 saveToDrive 成功後加入這段，讓它自動去寫入 Sheet
+async function syncToHistory(caseData) {
+    const WEBHOOK_HISTORY = 'https://l52511.zeabur.app/webhook/history-ozwak';
+    await fetch(WEBHOOK_HISTORY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            caseName: caseData.filename,
+            summary: caseData.content.substring(0, 100), // 擷取前100字
+            timestamp: new Date().toISOString()
+        })
+    });
+}
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
