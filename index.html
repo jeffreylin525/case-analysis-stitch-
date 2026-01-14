@@ -186,43 +186,7 @@
         }
 
         // 讀取歷史紀錄 (第三條工作流)
-        async function loadHistory() {
-            switchTab('history');
-            const listContainer = document.getElementById('history-list');
-            listContainer.innerHTML = '<div class="text-center py-10 text-slate-400">讀取紀錄中...</div>';
-
-            try {
-                const response = await fetch(WEBHOOK_GET_HISTORY, { method: 'POST' });
-                const data = await response.json(); // 預期 n8n 回傳一個陣列
-                
-                listContainer.innerHTML = '';
-                
-                // 限制顯示 5 筆
-                const records = Array.isArray(data) ? data.slice(-5).reverse() : [];
-                
-                if (records.length === 0) {
-                    listContainer.innerHTML = '<div class="text-center py-10 text-slate-400">目前尚無紀錄</div>';
-                    return;
-                }
-
-                records.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = "bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-primary transition-all";
-                    card.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-slate-800 text-sm">${item.caseName || '未命名案件'}</h3>
-                            <span class="text-[10px] text-slate-400 bg-slate-50 px-2 py-1 rounded-full">${item.timestamp || ''}</span>
-                        </div>
-                        <p class="text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                            ${item.summary || '無摘要內容'}
-                        </p>
-                    `;
-                    listContainer.appendChild(card);
-                });
-            } catch (error) {
-                listContainer.innerHTML = '<div class="text-center py-10 text-red-400">讀取失敗，請確認 Webhook 狀態</div>';
-            }
-        }
+        
     </script>
 </body>
 </html>
